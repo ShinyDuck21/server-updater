@@ -26,7 +26,7 @@ import java.util.zip.ZipInputStream;
 public class Modrinth {
     String baseUrl = "https://api.modrinth.com/v2/";
 
-    private static String generateHash(String filePath, String algorithm) throws IOException, NoSuchAlgorithmException {
+    public static String generateHash(String filePath, String algorithm) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         try (FileInputStream fis = new FileInputStream(filePath)) {
             byte[] buffer = new byte[8192];
@@ -44,7 +44,54 @@ public class Modrinth {
         return hexString.toString();
     }
 
-    public void downloadModpack(String slug, String version) {
+    public static void unzip(String zipFile, File output) throws IOException {
+        byte[] buffer = new byte[1024];
+        ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
+        ZipEntry zipEntry = zis.getNextEntry();
+
+        while (zipEntry != null) {
+            File newFile = new File(output, String.valueOf(zipEntry));
+            if (zipEntry.isDirectory()) {
+                if (!newFile.isDirectory() && !newFile.mkdirs()) {
+                    throw new IOException("Could not create directory " + newFile.getAbsolutePath());
+                }
+            } else {
+                // Fix for windows created zip files
+                File parent = newFile.getParentFile();
+                if (!parent.isDirectory() && !parent.mkdirs()) {
+                    throw new IOException("Could not create directory " + parent.getAbsolutePath());
+                }
+
+                FileOutputStream fos = new FileOutputStream(newFile);
+                int len;
+                while ((len = zis.read(buffer)) > 0) {
+                    fos.write(buffer, 0, len);
+                }
+
+                fos.close();
+            }
+
+            zipEntry = zis.getNextEntry();
+        }
+
+        zis.closeEntry();
+        zis.close();
+    }
+
+    /**
+     * Downloads a Minecraft modpack from the Modrinth provider
+     *
+     * @param slug    The slug/id of the modpack found on modrinth
+     * @param version The version of Minecraft
+     * @param output  The output directory
+     * @throws IOException              May be thrown if Files not Found or URL doesn't work
+     * @throws InterruptedException     May be thrown if URL doesn't work
+     * @throws NullPointerException     JSON may throw if URL doesn't work
+     * @throws NoSuchAlgorithmException Should not be thrown but caught just in case
+     * @throws RuntimeException         Catch all for all the exceptions
+     */
+
+    public void downloadModpack(String slug, String version, File output) {
         HttpClient httpclient = HttpClient.newBuilder()
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
@@ -90,10 +137,10 @@ public class Modrinth {
             if (!hash.equals(files.get("hashes").getAsJsonObject().get("sha512").getAsString())) {
                 throw new IOException("Download error occured. please try again later.");
             }
-
+            System.out.println("Downloaded: " + filename);
             filename = filename.replace(".mrpack", ".zip");
             mrpack.renameTo(new File(mrpack.getParentFile(), filename));
-            File output = new File("output");
+            System.out.println("Renamed: " + filename);
 
             unzip(Paths.get(filename).toAbsolutePath().toString(), output);
 
@@ -129,6 +176,8 @@ public class Modrinth {
                 try {
                     HttpResponse<InputStream> send = httpclient.send(httpRequest, HttpResponse.BodyHandlers.ofInputStream());
                     Files.copy(send.body(), Paths.get(output.getAbsolutePath() + "/" + key));
+
+                    System.out.println("Downloaded mods: " + keySplit[1]);
                 } catch (IOException | InterruptedException e) {
                     System.err.println("Error downloading: " + keySplit[1]);
                 }
@@ -137,39 +186,7 @@ public class Modrinth {
         } catch (IOException | InterruptedException | NullPointerException | NoSuchAlgorithmException e) {
             throw new RuntimeException(e);
         }
-    }
 
-    private void unzip(String zipFile, File output) throws IOException {
-        byte[] buffer = new byte[1024];
-        ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFile));
-        ZipEntry zipEntry = zis.getNextEntry();
-
-        while (zipEntry != null) {
-            File newFile = new File(output, String.valueOf(zipEntry));
-            if (zipEntry.isDirectory()) {
-                if (!newFile.isDirectory() && !newFile.mkdirs()) {
-                    throw new IOException("Could not create directory " + newFile.getAbsolutePath());
-                }
-            } else {
-                // Fix for windows created zip files
-                File parent = newFile.getParentFile();
-                if (!parent.isDirectory() && !parent.mkdirs()) {
-                    throw new IOException("Could not create directory " + parent.getAbsolutePath());
-                }
-
-                FileOutputStream fos = new FileOutputStream(newFile);
-                int len;
-                while ((len = zis.read(buffer)) > 0) {
-                    fos.write(buffer, 0, len);
-                }
-
-                fos.close();
-            }
-
-            zipEntry = zis.getNextEntry();
-        }
-
-        zis.closeEntry();
-        zis.close();
+        System.out.println("Successfully downloaded: " + slug);
     }
 }

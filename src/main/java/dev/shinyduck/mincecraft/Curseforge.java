@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import io.github.cdimascio.dotenv.Dotenv;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -80,7 +81,47 @@ public class Curseforge {
         }
     }
 
-    public void downloadModpack(String projectId) {
+    public void downloadModpack(String projectId, String version, String curseforgeApiKey, File output) {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NORMAL)
+                .build();
 
+        try {
+            HttpRequest fileReq = HttpRequest.newBuilder()
+                    .uri(URI.create(baseURL + "v1/mods/" + projectId + "/files?gameVersion=" + version))
+                    .header("x-api-key", curseforgeApiKey)
+                    .build();
+
+            HttpResponse<String> fileRes = httpClient.send(fileReq, HttpResponse.BodyHandlers.ofString());
+            JsonArray fileArray = JsonParser.parseString(fileRes.body()).getAsJsonObject().get("data").getAsJsonArray();
+
+            JsonObject latestProject = null;
+            Instant latestDate = null;
+            for (JsonElement jsonElement : fileArray) {
+                JsonObject jsonObject = (JsonObject) jsonElement;
+                Instant date = Instant.parse(jsonObject.get("fileDate").getAsString());
+
+                if (latestDate == null) {
+                    latestDate = date;
+                    latestProject = jsonObject;
+                } else if (latestDate.isAfter(date)) {
+                    latestDate = date;
+                    latestProject = jsonObject;
+                }
+            }
+
+            HttpRequest downloadReq = HttpRequest.newBuilder()
+                    .uri(URI.create(latestProject.get("downloadUrl").getAsString()))
+                    .header("x-api-key", curseforgeApiKey)
+                    .build();
+
+            HttpResponse<InputStream> downloadSend = httpClient.send(downloadReq, HttpResponse.BodyHandlers.ofInputStream());
+            String fileName = latestProject.get("fileName").getAsString();
+            Files.copy(downloadSend.body(), Paths.get(fileName));
+
+            Modrinth.unzip(Paths.get(fileName).toAbsolutePath().toString(), output);
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

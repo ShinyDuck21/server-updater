@@ -50,6 +50,7 @@ public class updater {
             modrinth.downloadModpack(argList.get(1), argList.get(2), output);
         } else if (argList.getFirst().equalsIgnoreCase("curseforge")) {
             Curseforge curseforge = new Curseforge();
+            Dotenv dotenv = Dotenv.load();
             String curseforgeApiKey = dotenv.get("curseforge-api-key");
             curseforge.downloadModpack(argList.get(1), argList.get(2), curseforgeApiKey, output);
         } else {

@@ -7,13 +7,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class updater {
+public class Updater {
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.load();
+        // Stores the Arguments as a list instead of an Array
         List<String> argList = new ArrayList<>(Arrays.asList(args));
+        // Default output
         File output = new File("output");
 
-
+        // Help text if help flag is passed through
         if (argList.isEmpty() || argList.contains("--help") || argList.contains("-h")) {
             System.out.println("Minecraft modpack downloader");
             System.out.println("Usage: mcdownloader.jar <provider> <id/slug> <version>");
@@ -28,28 +29,37 @@ public class updater {
             System.exit(0);
         }
 
+        // Output Flag
         if (argList.contains("-o") || argList.contains("--output")) {
+            // Gets index of Output Flag
             int index = argList.indexOf("--output");
             if (index == -1) {
                 index = argList.indexOf("-o");
             }
 
+            // Ensures that the output directory is provided
             if (argList.get(index + 1).equalsIgnoreCase("curseforge") || argList.get(index + 1).equalsIgnoreCase("modrinth")) {
                 System.err.println("Please provide a valid output directory");
                 System.exit(1);
             }
 
+            // Updates the output variable
             output = new File(argList.get(index + 1));
 
+            // Removes the output flag from the List
             argList.remove("-o");
             argList.remove("--output");
         }
 
+
+        // Checks which mod provider is chosen.
         if (argList.getFirst().equalsIgnoreCase("modrinth")) {
             Modrinth modrinth = new Modrinth();
             modrinth.downloadModpack(argList.get(1), argList.get(2), output);
         } else if (argList.getFirst().equalsIgnoreCase("curseforge")) {
             Curseforge curseforge = new Curseforge();
+            /* CurseForge needs an API key to access the API.
+            The API Key is stored in a .env file to keep the secret safe. */
             Dotenv dotenv = Dotenv.load();
             String curseforgeApiKey = dotenv.get("curseforge-api-key");
             curseforge.downloadModpack(argList.get(1), argList.get(2), curseforgeApiKey, output);

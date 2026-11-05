@@ -24,6 +24,16 @@ public class Curseforge {
     Dotenv dotenv = Dotenv.load();
     String curseforgeApiKey = dotenv.get("curseforge-api-key");
 
+    /**
+     * Will work on this function later. Not a priority right now
+     *
+     * @param projectIds
+     * @param gameVersion
+     * @param modLoader
+     * @deprecated
+     */
+
+    @Deprecated
     public void downloadModList(List<String> projectIds, String gameVersion, Modloaders modLoader) {
         HttpClient httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(20))
@@ -80,6 +90,16 @@ public class Curseforge {
             throw new RuntimeException(e);
         }
     }
+
+    /**
+     * Downloads a Modpack from CurseForge via the CurseForge API
+     *
+     * @param projectId        Project ID of the Modpack
+     * @param version          Version of Minecraft you would like to use
+     * @param curseforgeApiKey CurseForge API requires an API key to be able to use the API
+     * @param output           The Output directory. As a File Object.
+     * @author ShinyDuck21
+     */
 
     public void downloadModpack(String projectId, String version, String curseforgeApiKey, File output) {
         HttpClient httpClient = HttpClient.newBuilder()

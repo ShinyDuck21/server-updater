@@ -24,7 +24,8 @@ public class Updater {
             System.out.println("    - version: Version of Minecraft");
             System.out.println("Environment Variables are used to store sensitive info");
             System.out.println("Key environment variables are:");
-            System.out.println("    curseforge-api-key (Note: If you are not using curseforge you do not need to provide an API key");
+            System.out.println("    curseforge-api-key (Note: If you are " +
+                    "not using curseforge you do not need to provide an API key");
 
             System.exit(0);
         }
@@ -38,7 +39,8 @@ public class Updater {
             }
 
             // Ensures that the output directory is provided
-            if (argList.get(index + 1).equalsIgnoreCase("curseforge") || argList.get(index + 1).equalsIgnoreCase("modrinth")) {
+            if (argList.get(index + 1).equalsIgnoreCase("curseforge") ||
+                    argList.get(index + 1).equalsIgnoreCase("modrinth")) {
                 System.err.println("Please provide a valid output directory");
                 System.exit(1);
             }
@@ -64,7 +66,8 @@ public class Updater {
             String curseforgeApiKey = dotenv.get("curseforge-api-key");
             curseforge.downloadModpack(argList.get(1), argList.get(2), curseforgeApiKey, output);
         } else {
-            System.out.println("That provider is not allowed. If you would like to add it please make a issue on github.");
+            System.out.println("That provider is not allowed. " +
+                    "If you would like to add it please make an issue on github.");
         }
     }
 }

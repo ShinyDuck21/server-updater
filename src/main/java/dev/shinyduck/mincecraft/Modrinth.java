@@ -36,7 +36,7 @@ public class Modrinth {
      * @throws NoSuchAlgorithmException Thrown when the Hashing Function doesn't recognize the Algorithm Provided
      * @author ShinyDuck21
      */
-
+    @org.jetbrains.annotations.NotNull
     public static String generateHash(String filePath, String algorithm) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance(algorithm);
         try (FileInputStream fis = new FileInputStream(filePath)) {
@@ -107,6 +107,7 @@ public class Modrinth {
      * @throws NullPointerException     JSON may throw if URL doesn't work
      * @throws NoSuchAlgorithmException Should not be thrown but caught just in case
      * @throws RuntimeException         Catch all for all the exceptions
+     * @author ShinyDuck21
      */
     public void downloadModpack(String slug, String version, File output) {
         // Sets up the HTTP Client for the Function
@@ -190,7 +191,7 @@ public class Modrinth {
             JsonArray modrinthJsonFiles = JsonParser.parseString(builder.toString()).getAsJsonObject().get("files").getAsJsonArray();
             HashMap<String, String> downloadMods = new HashMap<>();
 
-            // Maps each file to it's file name
+            // Maps each file to its file name
             for (JsonElement file : modrinthJsonFiles) {
                 JsonObject fileObj = file.getAsJsonObject();
                 downloadMods.put(fileObj.get("path").getAsString(), fileObj.get("downloads").getAsJsonArray().get(0).getAsString());
